@@ -18,12 +18,13 @@
     }
   
     async function update(options) {
+      console.log("ES update getting called :::: ",options)
       try {
         let client = connection.getClient();
         return await client.update({
-          index: options.index,
+          index: String(options.index).toLowerCase(),
           id: options.id,
-          body: options.body
+          document: options.document
         });
       } catch (err) {
         throw err;

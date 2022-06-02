@@ -9,22 +9,24 @@
         docs.forEach(doc => postSave(doc));
       });
       
-      schema.post('findOneAndUpdate', function (doc) {
-  
+      schema.pre('findOneAndUpdate', function (doc) {
+        console.log("find one and update  post hook getting called")
         const typeName = this.constructor.modelName || (this.model && this.model.modelName ? this.model.modelName : null);
         const document = new doc.constructor(doc);
         let _doc = document._doc;
         let id = _doc._id.toString();
         _doc.id = id;
         delete _doc._id;
-  
-        elasticsearchService.updateDocument({
-          doc: _doc,
-          type: typeName
-        }, function (err) {
+        console.log("Doc : ", _doc);
+        elasticsearchService.update({
+            index:typeName,
+            document: _doc,
+            id:id
+        }, function (err,res) {
           if (err) {
             console.error(err);
           }
+          console.log(res);
         });
       });
       schema.post('remove', postRemove);
@@ -38,12 +40,6 @@
       let _doc = document._doc;
       _doc.id = _doc._id.toString();
       delete _doc["_id"];
-      console.log("elastic postSave ",{
-        index:typeName,
-        document: _doc,
-        id: _doc.id
-      });
-
       elasticsearchService.create({
         index:typeName,
         document: _doc,

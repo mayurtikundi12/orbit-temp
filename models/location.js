@@ -3,7 +3,7 @@
     const esMiddleware = require('../utility/elastic-mongoose-plugin');
 
     var LocationSchema = mongoose.Schema({
-        locationId:{type:String},
+        locationID:{type:String},
         addressStreetAndNumber:{type:String},
         addressCity:{type:String},
         addressPostalCode:{type:String},

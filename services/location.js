@@ -8,8 +8,8 @@ const locationService = {
     },
 
     updateLocation : async function({ locationData, format }){
-        const orbitaLocation = this.transformDataFormat({locationData, format, type : this.utility.CONSTANTS.MUTATION });
-        const location = await locationModel.findOneAndUpdate( { locationId: orbitaLocation["locationId"]} , orbitaLocation );
+        const orbitaLocation = this.transformDataFormat({location: locationData, format, type : this.utility.CONSTANTS.MUTATION });
+        const location = await locationModel.findOneAndUpdate( { locationID: orbitaLocation["locationID"]} , orbitaLocation );
         return this.transformDataFormat({ location , format, type: this.utility.CONSTANTS.QUERY });
     },
     deleteLocation: async function({locationId, format}){
@@ -21,7 +21,6 @@ const locationService = {
         const location = await locationModel.find( searchQuery );
         if(Array.isArray(location)){
             return location.map(loc => {
-                loc["locationID"] = loc["_id"];
                 delete loc["_id"];
                 delete loc["__v"];
                 return this.transformDataFormat( {location: loc, format ,  type: this.utility.CONSTANTS.QUERY});
@@ -117,9 +116,11 @@ const locationService = {
                             let mappedKey = this.external_mappings[externalKey];
                             if(externalKey.includes(".")){
                                 let [parentKey, childKey] = externalKey.split(".");
-                                formattedLocation[mappedKey] = transformationData[parentKey][childKey];
+                                (transformationData[parentKey] !== undefined && transformationData[parentKey][childKey] !== undefined) ? formattedLocation[mappedKey] = transformationData[parentKey][childKey] : console.log(`Skipped ${parentKey}.${childKey} as value is undefined`);
+                                // formattedLocation[mappedKey] = transformationData[parentKey][childKey];
                             }else{
-                                formattedLocation[mappedKey] = transformationData[externalKey];
+                                (transformationData[externalKey] !== undefined) ? formattedLocation[mappedKey] = transformationData[externalKey] : console.log(`Skipped ${externalKey} as value is undefined`);
+                                // formattedLocation[mappedKey] = transformationData[externalKey];
                             }
                         }
     
