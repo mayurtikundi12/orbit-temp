@@ -12,11 +12,11 @@ mongoose.connect('mongodb+srv://biz-admin:xiT7QK5n6FK6WQEH@bizmorphic-prod.ytmpz
 
 
 mongoose.Query.prototype.exec = async function overrideExec(...params) {
-  console.log("getting called ::::::::::::::", Object.keys(this));
-  console.log("getting called -------->", this.op);
+  // console.log("getting called ::::::::::::::", Object.keys(this));
+  console.log("getting called mongoose operation -------->", this.op);
 
   try {
-    if (this.mongooseCollection.name == 'Location' && this.op != 'findOneAndUpdate') {
+    if (this.mongooseCollection.name == 'Location' && this.op == 'findOne' || this.op == 'find') {
 
       const cacheValue = await elasticsearchService.search({
         index: String(this.mongooseCollection.name).toLowerCase(),

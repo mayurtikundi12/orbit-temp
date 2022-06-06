@@ -8,7 +8,8 @@
         let client = connection.getClient();
         let createRes = await client.index({
           index: String(options.index).toLowerCase(),
-          document: options.document
+          document: options.document,
+          id:options.id
         });
         return createRes;
       } catch (err) {
@@ -80,18 +81,20 @@
         throw err;
       }
     }
-  
-    async function deleteByQuery(options) {
+
+    async function deleteById(options) {
+      console.log("delete by id called with options ", options);
       try {
         let client = connection.getClient();
-        return await client.deleteByQuery({
-          index: options.index,
-          body: options.body
+        return await client.delete({
+          index: String(options.index).toLowerCase(),
+          id: String(options.id)
         });
       } catch (err) {
         throw err;
       }
     }
+
   
     module.exports = {
        create,
@@ -99,7 +102,8 @@
        remove,
        search,
        bulk,
-       deleteByQuery
+       deleteByQuery,
+       deleteById
     }
   
 

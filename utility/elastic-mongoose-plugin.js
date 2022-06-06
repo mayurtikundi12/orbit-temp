@@ -9,7 +9,7 @@
         docs.forEach(doc => postSave(doc));
       });
       
-      schema.pre('findOneAndUpdate', function (doc) {
+      schema.post('findOneAndUpdate', function (doc) {
         console.log("find one and update  post hook getting called")
         const typeName = this.constructor.modelName || (this.model && this.model.modelName ? this.model.modelName : null);
         const document = new doc.constructor(doc);
@@ -29,8 +29,14 @@
           console.log(res);
         });
       });
+
+
       schema.post('remove', postRemove);
+
+
       schema.post('findOneAndRemove', postRemove);
+
+      schema.post('findOneAndDelete', postDelete);
     }
   
     function postSave(doc) {
@@ -47,6 +53,23 @@
       }).catch((err) => {
         if (err) {
           console.error(err.message);
+        }
+      });
+    }
+
+    function postDelete(doc) {
+      console.log("post delete getting called ", doc);
+      const typeName = this.constructor.modelName || (this.model && this.model.modelName ? this.model.modelName : null);
+      const document = new doc.constructor(doc);
+      const _doc = document._doc;
+      const id = _doc._id.toString();
+  
+      elasticsearchService.deleteById({
+        id: id,
+        index: typeName,
+      }, function (err) {
+        if (err) {
+          console.error(err);
         }
       });
     }

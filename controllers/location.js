@@ -29,7 +29,7 @@ module.exports = {
     deleteLocation: async function(req, res, next){
         try {
             const {format} = req.query;
-            const {locationData}  =  req.body;
+            const locationData =  req.body;
             const result = await locationService.deleteLocation({locationData, format});
             res.status(200).json(result);
         } catch (error) {

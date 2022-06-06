@@ -12,8 +12,11 @@ const locationService = {
         const location = await locationModel.findOneAndUpdate( { locationID: orbitaLocation["locationID"]} , orbitaLocation );
         return this.transformDataFormat({ location , format, type: this.utility.CONSTANTS.QUERY });
     },
-    deleteLocation: async function({locationId, format}){
-        const location = await locationModel.findOneAndDelete( {locationId} );
+    deleteLocation: async function({locationData, format}){
+        console.log("data ---- ",locationData);
+        const orbitaLocation = this.transformDataFormat({location: locationData, format, type : this.utility.CONSTANTS.MUTATION });
+        console.log("transformed location to deleete ", orbitaLocation);
+        const location = await locationModel.findOneAndDelete( {locationID:orbitaLocation.locationID} );
         return this.transformDataFormat({location , format, type: this.utility.CONSTANTS.QUERY});
     },
     searchLocations: async function({ searchQuery, format }){
@@ -30,8 +33,8 @@ const locationService = {
         }
 
     },
-    getLocation : async function({locationId, format}){
-        const location = await locationModel.findById( locationId );
+    getLocation : async function({locationID, format}){
+        const location = await locationModel.findById( locationID );
         return this.transformDataFormat({location , format, type: this.utility.CONSTANTS.QUERY}); 
     },
 
