@@ -12,34 +12,89 @@ const locationService = {
         const location = await locationModel.findOneAndUpdate( { locationID: orbitaLocation["locationID"]} , orbitaLocation );
         return this.transformDataFormat({ location , format, type: this.utility.CONSTANTS.QUERY });
     },
+
     deleteLocation: async function({locationData, format}){
-        console.log("data ---- ",locationData);
         const orbitaLocation = this.transformDataFormat({location: locationData, format, type : this.utility.CONSTANTS.MUTATION });
-        console.log("transformed location to deleete ", orbitaLocation);
         const location = await locationModel.findOneAndDelete( {locationID:orbitaLocation.locationID} );
         return this.transformDataFormat({location , format, type: this.utility.CONSTANTS.QUERY});
     },
-    searchLocations: async function({ searchQuery, format }){
-        // TODO: ask andrew on which fields location can be searched
-        const location = await locationModel.find( searchQuery );
-        if(Array.isArray(location)){
-            return location.map(loc => {
-                delete loc["_id"];
-                delete loc["__v"];
+
+    searchLocations: async function({ searchQuery, format , limit=10 , page=1 }){
+        const orbitaLocation = this.transformDataFormat( {location: searchQuery, format ,  type: this.utility.CONSTANTS.MUTATION});
+
+        for (const ol of Object.keys(orbitaLocation)) {
+            if(!orbitaLocation[ol]){
+                delete orbitaLocation[ol];
+            }
+        }
+
+        let searchedLocations = [];
+        let searchOptions = { 
+            q :orbitaLocation ,
+            page,
+            limit
+        }
+
+        try {
+            searchedLocations =  await elasticPaginate(searchOptions);
+        } catch (error) {
+            searchedLocations = await mongoPaginate(searchOptions);
+        }
+
+        if(Array.isArray(searchedLocations)){
+            return searchedLocations.map(loc => {
                 return this.transformDataFormat( {location: loc, format ,  type: this.utility.CONSTANTS.QUERY});
             });
         }else{
-            return this.transformDataFormat( {location, format ,  type: this.utility.CONSTANTS.QUERY});
+            return this.transformDataFormat( {location:searchedLocations, format ,  type: this.utility.CONSTANTS.QUERY});
         }
 
-    },
-    getLocation : async function({locationID, format}){
-        const location = await locationModel.findById( locationID );
-        return this.transformDataFormat({location , format, type: this.utility.CONSTANTS.QUERY}); 
+        async function elasticPaginate(options) {
+            let rawQuery = { 
+                from:( options.page - 1 ) * 10,
+                size: 10 
+            };
+           if (options.q) rawQuery.query = { match: options.q };
+           rawQuery.index="location";
+
+           const elasticLocationsRaw = await esClient.search(rawQuery);
+           return elasticLocationsRaw.body.hits.hits.map(item => item._source);
+        };
+       
+        async function mongoPaginate(options) {
+           return new Promise( (resolve, reject) =>{
+            locationModel.paginate(
+                options.q,
+                {
+                  page: options.page,
+                  limit: options.limit
+                },
+                function (err, locations, pageCount, itemCount, resultsCount) {
+                  if (err) {
+                    reject(err);
+                  }
+          
+                  resolve({
+                    locations: locations,
+                    paging: {
+                      pageCount: pageCount,
+                      currentPage: options.page,
+                      itemCount: itemCount.length,
+                      resultsCount: resultsCount,
+                      hasMore: {
+                        hasPrevious: options.page > 1,
+                        hasNext: options.page < pageCount,
+                      },
+                    },
+                  });
+                }
+              );
+           });
+        };
+
     },
 
     transformDataFormat: function({location, format, type}){
-        console.log("location 123123123123:: ", location);
         try {
             const FORMATS = {
                 "FHIR":{
